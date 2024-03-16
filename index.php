@@ -2,20 +2,20 @@
 // Start the session
 session_start();
 
+// Include the database connection
+require_once 'db.php';
+
 // Check if the user is already logged in, redirect to home page if logged in
 if (isset($_SESSION['loggedin']) && $_SESSION['loggedin'] === true) {
     if ($_SESSION['role'] === 'user') {
         header('location: home.php');
     } elseif ($_SESSION['role'] === 'admin') {
-        header('location: admin_dashboard.php');
+        header('location: view_report.php');
     } elseif ($_SESSION['role'] === 'govt') {
-        header('location: govt_dashboard.php');
+        header('location: view_report.php');
     }
     exit;
 }
-
-// Include the database connection
-require_once 'db.php';
 
 // Initialize variables
 $username = $password = '';
@@ -40,31 +40,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Check input errors before logging in
     if (empty($username_err) && empty($password_err)) {
         // Prepare a select statement
-        $sql = "SELECT id, username, password, role FROM users WHERE username = :username";
+        $sql = "SELECT user_id, username, password, role FROM users WHERE username = ?";
 
-        if ($stmt = $pdo->prepare($sql)) {
+        if ($stmt = $conn->prepare($sql)) {
             // Bind variables to the prepared statement as parameters
-            $stmt->bindParam(':username', $param_username, PDO::PARAM_STR);
+            $stmt->bind_param('s', $param_username);
 
             // Set parameters
             $param_username = $username;
 
             // Attempt to execute the prepared statement
             if ($stmt->execute()) {
+                // Store result
+                $stmt->store_result();
+
                 // Check if username exists, if yes then verify password
-                if ($stmt->rowCount() == 1) {
-                    if ($row = $stmt->fetch()) {
-                        $id = $row['id'];
-                        $username = $row['username'];
-                        $hashed_password = $row['password'];
-                        $role = $row['role'];
+                if ($stmt->num_rows == 1) {
+                    // Bind result variables
+                    $stmt->bind_result($user_id, $username, $hashed_password, $role);
+                    if ($stmt->fetch()) {
                         if (password_verify($password, $hashed_password)) {
                             // Password is correct, start a new session
                             session_start();
 
                             // Store data in session variables
                             $_SESSION['loggedin'] = true;
-                            $_SESSION['id'] = $id;
+                            $_SESSION['user_id'] = $user_id;
                             $_SESSION['username'] = $username;
                             $_SESSION['role'] = $role;
 
@@ -72,9 +73,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             if ($role === 'user') {
                                 header('location: home.php');
                             } elseif ($role === 'admin') {
-                                header('location: admin_dashboard.php');
+                                header('location: view_report.php');
                             } elseif ($role === 'govt') {
-                                header('location: govt_dashboard.php');
+                                header('location: view_report.php');
                             }
                         } else {
                             // Display an error message if password is not valid
@@ -90,12 +91,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
 
             // Close statement
-            unset($stmt);
+            $stmt->close();
         }
     }
 
     // Close connection
-    unset($pdo);
+    $conn->close();
 }
 ?>
 

@@ -8,7 +8,7 @@ $username_err = $password_err = $confirm_password_err = $email_err = $phone_numb
 
 // Process form data when form is submitted
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    // Validate email
+    // Validate username
     if (empty(trim($_POST['username']))) {
         $username_err = 'Please enter your username.';
     } else {
@@ -16,10 +16,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     // Validate password
-    // (same validation logic as before)
+    if (empty(trim($_POST['password']))) {
+        $password_err = 'Please enter your password.';
+    } elseif (strlen(trim($_POST['password'])) < 6) {
+        $password_err = 'Password must have at least 6 characters.';
+    } else {
+        $password = trim($_POST['password']);
+    }
 
     // Validate confirm password
-    // (same validation logic as before)
+    if (empty(trim($_POST['confirm_password']))) {
+        $confirm_password_err = 'Please confirm your password.';
+    } else {
+        $confirm_password = trim($_POST['confirm_password']);
+        if (empty($password_err) && ($password != $confirm_password)) {
+            $confirm_password_err = 'Password did not match.';
+        }
+    }
 
     // Validate email
     if (empty(trim($_POST['email']))) {
@@ -37,34 +50,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Check input errors before inserting into database
     if (empty($username_err) && empty($password_err) && empty($confirm_password_err) && empty($email_err) && empty($phone_number_err)) {
-        $sql = "INSERT INTO users (username, password, email, phone_number) VALUES (?, ?, ?, ?)";
-        if ($stmt = $pdo->prepare($sql)) {
-            $stmt->bindParam(1, $param_username, PDO::PARAM_STR);
-            $stmt->bindParam(2, $param_password, PDO::PARAM_STR);
-            $stmt->bindParam(3, $param_email, PDO::PARAM_STR);
-            $stmt->bindParam(4, $param_phone_number, PDO::PARAM_STR);
+        $sql = "INSERT INTO users (username, email, password, phone_number) VALUES (?, ?, ?, ?)";
+        if ($stmt = $conn->prepare($sql)) {
+            $stmt->bind_param("ssss", $param_username, $param_email, $param_password, $param_phone_number);
 
             // Set parameters
             $param_username = $username;
-            $param_password = password_hash($password, PASSWORD_DEFAULT);
             $param_email = $email;
+            $param_password = password_hash($password, PASSWORD_DEFAULT); // Hash password
             $param_phone_number = $phone_number;
 
             // Attempt to execute the prepared statement
             if ($stmt->execute()) {
                 // Redirect to login page
                 header('location: index.php');
+                exit();
             } else {
-                echo 'Something went wrong. Please try again later.';
+                $error_message = 'Something went wrong. Please try again later.';
             }
 
             // Close statement
-            unset($stmt);
+            $stmt->close();
         }
     }
 
     // Close connection
-    unset($pdo);
+    $conn->close();
 }
 ?>
 
@@ -107,5 +118,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <button type="submit">Register</button>
         </div>
     </form>
+    <?php if (isset($error_message)) : ?>
+        <p><?php echo $error_message; ?></p>
+    <?php endif; ?>
 </body>
 </html>

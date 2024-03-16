@@ -39,6 +39,7 @@ include 'navbar.php';
 
             <h4>Start using InfraVision today and contribute to safer roads in your community!</h4>
         </div>
+        <!-- <form id="reportSubmissionForm" action="submit_report.php" method="post" enctype="multipart/form-data"> -->
         <div id="cameraContainer" class="hidden">
             <video id="cameraFeed" autoplay></video>
             <button id="captureBtn" class="hidden">Capture Image</button>
@@ -53,7 +54,7 @@ include 'navbar.php';
             <div id="capturedImageContainer"></div>
             <button id="retakeImageBtn" class="hidden">Retake Image</button>
             <p id="date"></p>
-            <p id="location"></p>
+            <p>Your Location:<span id="location"></span></p>
             <label for="additionalInfo">Additional Information:</label>
             <textarea id="additionalInfo" placeholder="Enter additional information..."></textarea>
             <label for="damageDuration">Duration of Damage:</label>
@@ -62,8 +63,21 @@ include 'navbar.php';
             <input type="text" id="damageSeverity" placeholder="Enter severity of damage...">
             <label for="landmark">Landmark:</label>
             <input type="text" id="landmark" placeholder="Enter landmark...">
-            <button id="submitReportBtn">Submit</button>
+            <button type="submit" id="submitReportBtn">Submit</button>
+
+              <!-- Error message -->
+              <p id="errorMessage" class="error-message hidden">Please fill in all the required fields.</p>
+              
         </div>
+<!-- </form> -->
+
+<!-- Modal -->
+<div id="modal" class="modal">
+  <div id="modal-content" class="modal-content">
+    <span id="modal-message"></span>
+  </div>
+</div>
+
         <div id="viewReportPage" class="hidden">
             <h2>View Report</h2>
             <div id="reportDetails"></div>
@@ -74,5 +88,6 @@ include 'navbar.php';
         </div>
     </div>
     <script src="script.js"></script>
+    <!-- <script src="report_handling.js"></script> -->
 </body>
 </html>
